@@ -15,19 +15,6 @@ const isPrime = (num: number): boolean => {
   return true;
 };
 
-const getRange = (difficulty: Difficulty): { min: number, max: number } => {
-  switch (difficulty) {
-    case Difficulty.BEGINNER:
-      return { min: 1, max: 9 };
-    case Difficulty.INTERMEDIATE:
-      return { min: 2, max: 50 };
-    case Difficulty.ADVANCED:
-      return { min: 10, max: 99 };
-    default:
-      return { min: 1, max: 9 };
-  }
-};
-
 export const generateQuestion = (
   operations: Operation[],
   difficulty: Difficulty,
@@ -69,7 +56,6 @@ export const generateQuestion = (
           n1 = getRandomInt(10, 30);
           n2 = getRandomInt(2, 12);
         } else if (difficulty === Difficulty.INTERMEDIATE) {
-          // Avoid 1 to prevent "super basic" problems in intermediate
           n1 = getRandomInt(10, 50);
           n2 = getRandomInt(2, 9);
           if (Math.random() > 0.5) [n1, n2] = [n2, n1];
@@ -79,7 +65,6 @@ export const generateQuestion = (
         }
         return { num1: n1, num2: n2, operation, answer: n1 * n2 };
       case Operation.DIVISION:
-        // Result = q, problem is (q*d) / d
         const q = difficulty === Difficulty.ADVANCED ? getRandomInt(5, 20) :
                   difficulty === Difficulty.INTERMEDIATE ? getRandomInt(2, 12) : getRandomInt(2, 10);
         const d = difficulty === Difficulty.ADVANCED ? getRandomInt(2, 15) :
@@ -97,13 +82,25 @@ export const generateQuestion = (
         const pNum = difficulty === Difficulty.BEGINNER ? getRandomInt(2, 25) :
                      difficulty === Difficulty.INTERMEDIATE ? getRandomInt(11, 70) : getRandomInt(30, 120);
         return { num1: pNum, operation, answer: isPrime(pNum) ? 1 : 0 };
+      case Operation.PERCENTAGE:
+        let perc, base;
+        if (difficulty === Difficulty.BEGINNER) {
+          perc = [10, 25, 50, 100][getRandomInt(0, 3)];
+          base = getRandomInt(1, 10) * 10;
+        } else if (difficulty === Difficulty.INTERMEDIATE) {
+          perc = [5, 15, 20, 30, 40, 60, 75, 80, 90][getRandomInt(0, 8)];
+          base = getRandomInt(1, 20) * 10;
+        } else {
+          perc = getRandomInt(1, 99);
+          base = getRandomInt(10, 100) * 10;
+        }
+        return { num1: perc, num2: base, operation, answer: (perc * base) / 100 };
     }
     return { num1: 0, operation, answer: 0 };
   };
 
   let newQuestion = attemptGeneration();
 
-  // Prevent immediate repeats
   if (lastQuestion && 
       newQuestion.num1 === lastQuestion.num1 && 
       (newQuestion.num2 === lastQuestion.num2) && 
@@ -123,6 +120,7 @@ export const getOperationSymbol = (op: Operation): string => {
     case Operation.SQUARE_ROOT: return '√';
     case Operation.CUBE_ROOT: return '∛';
     case Operation.PRIME: return '?P';
+    case Operation.PERCENTAGE: return '%';
     default: return '?';
   }
 };
@@ -167,6 +165,15 @@ export const generateHint = (q: Question): string => {
       return `Cube check: What number times itself three times is ${num1}? Hint: 2³=8, 5³=125.`;
     case Operation.PRIME:
       return `Divisibility: Is it even? Does the sum of digits (${Array.from(num1.toString()).reduce((a, b) => a + parseInt(b), 0)}) divide by 3?`;
+    case Operation.PERCENTAGE:
+      if (num2) {
+        if (num1 === 10) return `10% shortcut: Move the decimal left one place. ${num2} becomes ${num2 / 10}.`;
+        if (num1 === 25) return `25% shortcut: Divide by 4. Half of half.`;
+        if (num1 === 50) return `50% shortcut: Just take half.`;
+        if (num1 % 10 === 0) return `Find 10% (${num2 / 10}) and multiply by ${num1 / 10}.`;
+        return `Split: ${num1}% is ${Math.floor(num1 / 10) * 10}% + ${num1 % 10}%. Find each and sum.`;
+      }
+      break;
   }
   return "Break the problem into smaller steps.";
 };

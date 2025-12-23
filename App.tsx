@@ -17,7 +17,8 @@ import {
   Square,
   Lightbulb,
   Binary,
-  History
+  History,
+  Percent
 } from 'lucide-react';
 import { GameState, Operation, Difficulty, GameMode, GameStats, Question } from './types';
 import { generateQuestion, getOperationSymbol, generateHint } from './utils';
@@ -109,8 +110,8 @@ const App: React.FC = () => {
     e.preventDefault();
     if (!currentQuestion || feedback !== 'none' || userInput.trim() === '') return;
 
-    const numericAnswer = parseInt(userInput);
-    const isCorrect = numericAnswer === currentQuestion.answer;
+    const numericAnswer = parseFloat(userInput);
+    const isCorrect = Math.abs(numericAnswer - currentQuestion.answer) < 0.01;
 
     if (isCorrect) {
       setFeedback('correct');
@@ -182,6 +183,7 @@ const App: React.FC = () => {
       case Operation.SQUARE_ROOT: return "Square Root";
       case Operation.CUBE_ROOT: return "Cube Root";
       case Operation.PRIME: return "Prime Number Test";
+      case Operation.PERCENTAGE: return "Percentage Trainer";
       default: return "Math Exercise";
     }
   };
@@ -231,6 +233,7 @@ const App: React.FC = () => {
                   { op: Operation.SQUARE_ROOT, icon: Square, label: 'Square Root', color: 'text-indigo-500' },
                   { op: Operation.CUBE_ROOT, icon: Box, label: 'Cubed Root', color: 'text-violet-500' },
                   { op: Operation.PRIME, icon: Binary, label: 'Prime', color: 'text-teal-500' },
+                  { op: Operation.PERCENTAGE, icon: Percent, label: 'Percentage', color: 'text-fuchsia-500' },
                 ].map(({ op, icon: Icon, label, color }) => (
                   <button
                     key={op}
@@ -380,6 +383,12 @@ const App: React.FC = () => {
                   <div className="text-7xl sm:text-[8rem] font-black text-slate-800 tracking-tighter flex items-center gap-10">
                     {currentQuestion.operation === Operation.PRIME ? (
                       <span>{currentQuestion.num1}</span>
+                    ) : currentQuestion.operation === Operation.PERCENTAGE ? (
+                      <>
+                        <span>{currentQuestion.num1}%</span>
+                        <span className="text-indigo-400 text-4xl sm:text-5xl font-extrabold lowercase tracking-tight">of</span>
+                        <span>{currentQuestion.num2}</span>
+                      </>
                     ) : currentQuestion.num2 !== undefined ? (
                       <>
                         <span>{currentQuestion.num1}</span>
@@ -400,8 +409,9 @@ const App: React.FC = () => {
                     <input
                       ref={inputRef}
                       type="number"
+                      step="any"
                       pattern="[0-9]*"
-                      inputMode="numeric"
+                      inputMode="decimal"
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       disabled={feedback !== 'none'}

@@ -6,7 +6,8 @@ export enum Operation {
   DIVISION = 'division',
   SQUARE_ROOT = 'square_root',
   CUBE_ROOT = 'cube_root',
-  PRIME = 'prime'
+  PRIME = 'prime',
+  PERCENTAGE = 'percentage'
 }
 
 export enum Difficulty {
